@@ -29,7 +29,7 @@ jobs:
           unzip sonar-scanner.zip
           sonar-scanner-*/bin/sonar-scanner \
             -Dsonar.projectKey=sonar-test \
-            -Dsonar.projectName=Test SonarQube depuis GitHub \
+            -Dsonar.projectName="Test SonarQube depuis GitHub" \
             -Dsonar.sources=. \
             -Dsonar.host.url=${SONAR_HOST_URL} \
             -Dsonar.login=${SONAR_TOKEN}

@@ -3,6 +3,8 @@ name: Analyse SonarQube
 on:
 <<<<<<< Updated upstream
   push:
+    branches:
+      - main
     branches: [ main ]
 =======
   pull_request:

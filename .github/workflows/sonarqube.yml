@@ -20,12 +20,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Debug - Check host URL
-        run: echo "SonarQube URL $SONAR_HOST_URL"
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-      - name: Download SonarScanner and run analysis
+      - name: Run SonarScanner
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -34,6 +29,8 @@ jobs:
           unzip sonar-scanner.zip
           sonar-scanner-*/bin/sonar-scanner \
             -Dsonar.projectKey=sonar-test \
+            -Dsonar.projectName=Test SonarQube depuis GitHub \
             -Dsonar.sources=. \
             -Dsonar.host.url=${SONAR_HOST_URL} \
             -Dsonar.login=${SONAR_TOKEN}
+

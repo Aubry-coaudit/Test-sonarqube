@@ -6,12 +6,6 @@ function hello($name) {
 
 echo hello("World");
 
-
-eval($_GET['danger']);
-
-
-$password = 'admin';
-
 function duplicate() {
     echo "same code";
     echo "same code";

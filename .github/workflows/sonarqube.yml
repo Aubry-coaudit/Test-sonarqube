@@ -8,6 +8,7 @@ jobs:
   sonarqube:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
+    environment: env
 
     steps:
       - name: Checkout code
@@ -18,6 +19,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Debug - Check host URL
+        run: echo "SonarQube URL: $SONAR_HOST_URL"
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: Download SonarScanner and run analysis
         env:

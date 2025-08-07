@@ -21,7 +21,7 @@ jobs:
           java-version: '17'
 
       - name: Debug - Check host URL
-        run: echo "SonarQube URL: $SONAR_HOST_URL"
+        run: echo "SonarQube URL $SONAR_HOST_URL"
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 

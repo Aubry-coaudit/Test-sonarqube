@@ -6,6 +6,7 @@ function hello($name) {
 
 echo hello("World");
 
+
 function duplicate() {
     echo "same code";
     echo "same code";

@@ -40,8 +40,10 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          sleep 10 # Laisse le temps à SonarQube de traiter le rapport
-          ANALYSIS_ID=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/component?component=sonar-test" | jq -r '.queue[0].id')
+          # Extraire l'ID de tâche depuis le fichier généré par SonarScanner
+          ANALYSIS_ID=$(cat .scannerwork/report-task.txt | grep ceTaskId | cut -d'=' -f2)
+
+          echo "Analysis ID: $ANALYSIS_ID"
 
           # Attendre que l’analyse soit terminée
           while true; do
@@ -49,7 +51,7 @@ jobs:
             if [[ "$STATUS" == "SUCCESS" ]]; then
               break
             elif [[ "$STATUS" == "FAILED" ]]; then
-              echo "SonarQube analysis failed to process"
+              echo "SonarQube background task failed"
               exit 1
             else
               echo "Waiting for SonarQube analysis to complete..."
@@ -57,12 +59,12 @@ jobs:
             fi
           done
 
+          # Vérifier le statut du Quality Gate
           QUALITY_STATUS=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=sonar-test" | jq -r '.projectStatus.status')
-
           echo "Quality Gate Status: $QUALITY_STATUS"
 
           if [[ "$QUALITY_STATUS" != "OK" ]]; then
-            echo "Quality Gate failed. Failing the pipeline."
+            echo "❌ Quality Gate failed. Failing pipeline."
             exit 1
           fi
 

@@ -35,3 +35,34 @@ jobs:
             -Dsonar.host.url=${SONAR_HOST_URL} \
             -Dsonar.login=${SONAR_TOKEN}
 
+      - name: Wait for SonarQube Quality Gate result
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          sleep 10 # Laisse le temps à SonarQube de traiter le rapport
+          ANALYSIS_ID=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/component?component=sonar-test" | jq -r '.queue[0].id')
+
+          # Attendre que l’analyse soit terminée
+          while true; do
+            STATUS=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/task?id=${ANALYSIS_ID}" | jq -r '.task.status')
+            if [[ "$STATUS" == "SUCCESS" ]]; then
+              break
+            elif [[ "$STATUS" == "FAILED" ]]; then
+              echo "SonarQube analysis failed to process"
+              exit 1
+            else
+              echo "Waiting for SonarQube analysis to complete..."
+              sleep 3
+            fi
+          done
+
+          QUALITY_STATUS=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=sonar-test" | jq -r '.projectStatus.status')
+
+          echo "Quality Gate Status: $QUALITY_STATUS"
+
+          if [[ "$QUALITY_STATUS" != "OK" ]]; then
+            echo "Quality Gate failed. Failing the pipeline."
+            exit 1
+          fi
+

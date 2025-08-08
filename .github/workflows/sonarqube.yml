@@ -28,13 +28,10 @@ jobs:
         run: |
           curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
           unzip sonar-scanner.zip
-          sonar-scanner-*/bin/sonar-scanner \
+          ./sonar-scanner-*/bin/sonar-scanner \
             -Dsonar.projectKey=sonar-test \
             -Dsonar.projectName="Test SonarQube depuis GitHub" \
             -Dsonar.sources=. \
             -Dsonar.host.url=${SONAR_HOST_URL} \
             -Dsonar.login=${SONAR_TOKEN}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }} \
-            -Dsonar.pullrequest.base=${{ github.base_ref }} \
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
 

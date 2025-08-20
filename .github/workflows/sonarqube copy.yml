@@ -1,4 +1,4 @@
-name: Analyse SonarQube
+name: Analyse SonarQube Legacy
 
 on:
   pull_request:

@@ -2,7 +2,8 @@ name: Analyse SonarQube
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 concurrency:
   group: sonar-${{ github.ref }}
@@ -12,11 +13,15 @@ jobs:
   sonar:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
+    environment: env
     timeout-minutes: 20
 
     permissions:
       contents: read
       # (Si tu as Developer+ et actives la PR decoration via GitHub App, tu peux donner pull-requests: write)
+
+    env:
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
     steps:
       - name: Checkout
@@ -44,15 +49,34 @@ jobs:
       # - run: npm ci && npm test -- --coverage
       # - run: ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml
 
+      - name: Debug SONAR_HOST_URL
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          echo "SONAR_HOST_URL=>>${SONAR_HOST_URL}<<"
+          printf "%s" "${SONAR_HOST_URL}" | hexdump -C | tail -n+1
+
+      - name: Preflight /batch/index
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y jq curl
+          echo "HEAD ${SONAR_HOST_URL}/batch/index"
+          curl -I "${SONAR_HOST_URL}/batch/index"
+          echo "Status API:"
+          curl -s "${SONAR_HOST_URL}/api/system/status" | jq .
+
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        uses: SonarSource/sonarqube-scan-action@v4
+        
         with:
           args: >
             -Dsonar.projectKey=sonar-test
-            -Dsonar.projectName=Test SonarQube depuis GitHub
+            -Dsonar.projectName=Test-SonarQube-depuis-GitHub
             -Dsonar.sources=.
             -Dsonar.exclusions=**/vendor/**,**/node_modules/**,**/dist/**,**/build/**
             # Exemple couverture (à adapter) :
@@ -61,7 +85,8 @@ jobs:
             # -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml
 
       - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        

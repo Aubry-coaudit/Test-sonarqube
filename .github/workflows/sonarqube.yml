@@ -13,11 +13,13 @@ jobs:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: env
 
     permissions:
       contents: read
       # (Si tu as Developer+ et actives la PR decoration via GitHub App, tu peux donner pull-requests: write)
+
+    env:
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
     steps:
       - name: Checkout

@@ -44,6 +44,24 @@ jobs:
       # - run: npm ci && npm test -- --coverage
       # - run: ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml
 
+      - name: Debug SONAR_HOST_URL
+        run: |
+          echo "SONAR_HOST_URL=>>${SONAR_HOST_URL}<<"
+          printf "%s" "${SONAR_HOST_URL}" | hexdump -C | tail -n+1
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Preflight /batch/index
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y jq curl
+          echo "HEAD ${SONAR_HOST_URL}/batch/index"
+          curl -I "${SONAR_HOST_URL}/batch/index"
+          echo "Status API:"
+          curl -s "${SONAR_HOST_URL}/api/system/status" | jq .
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:

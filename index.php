@@ -15,5 +15,3 @@ function duplicate() {
 function badCode($param) {
     // rien du tout
 }
-
-$password = 'admin';

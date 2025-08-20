@@ -48,13 +48,15 @@ jobs:
       # - run: ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml
 
       - name: Debug SONAR_HOST_URL
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           echo "SONAR_HOST_URL=>>${SONAR_HOST_URL}<<"
           printf "%s" "${SONAR_HOST_URL}" | hexdump -C | tail -n+1
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: Preflight /batch/index
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           set -euo pipefail
           sudo apt-get update && sudo apt-get install -y jq curl
@@ -62,14 +64,13 @@ jobs:
           curl -I "${SONAR_HOST_URL}/batch/index"
           echo "Status API:"
           curl -s "${SONAR_HOST_URL}/api/system/status" | jq .
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        uses: SonarSource/sonarqube-scan-action@v4
+        
         with:
           args: >
             -Dsonar.projectKey=sonar-test
@@ -82,7 +83,8 @@ jobs:
             # -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml
 
       - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        

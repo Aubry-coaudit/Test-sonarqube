@@ -5,16 +5,16 @@ on:
     branches:
       - main
 
-# concurrency:
-#   group: sonar-${{ github.ref }}
-#   cancel-in-progress: true
+concurrency:
+  group: sonar-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   sonar:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
     environment: env
-    # timeout-minutes: 20
+    timeout-minutes: 20
 
     permissions:
       contents: read

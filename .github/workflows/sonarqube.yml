@@ -2,17 +2,19 @@ name: Analyse SonarQube
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
-concurrency:
-  group: sonar-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: sonar-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   sonar:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    environment: env
+    # timeout-minutes: 20
 
     permissions:
       contents: read

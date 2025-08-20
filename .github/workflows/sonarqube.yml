@@ -76,7 +76,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=sonar-test
-            -Dsonar.projectName=Test SonarQube depuis GitHub
+            -Dsonar.projectName=Test-SonarQube-depuis-GitHub
             -Dsonar.sources=.
             -Dsonar.exclusions=**/vendor/**,**/node_modules/**,**/dist/**,**/build/**
             # Exemple couverture (à adapter) :

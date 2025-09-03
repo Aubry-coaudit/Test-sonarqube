@@ -12,7 +12,7 @@ concurrency:
 jobs:
   sonar:
     name: SonarQube Analysis
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     permissions:

@@ -11,59 +11,41 @@ concurrency:
 
 jobs:
   sonar:
-    name: SonarQube Analysis
-    # Ajoute tes labels runner si nécessaire : [self-hosted, linux, sonar]
-    # runs-on: self-hosted
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 20
-
-    permissions:
-      contents: read
+    permissions: { contents: read }
 
     env:
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_TOKEN:     ${{ secrets.SONAR_TOKEN }}
+      # drapeau pratique pour sauter l'analyse si secrets absents (ex: PR fork)
+      HAS_SECRETS: ${{ secrets.SONAR_HOST_URL != '' && secrets.SONAR_TOKEN != '' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
-      # Java requis car le scanner tourne sur une JVM
       - name: Setup Java 17
         uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+        with: { distribution: temurin, java-version: '17' }
 
-      - name: Cache Sonar packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: sonar-${{ runner.os }}-${{ hashFiles('**/*') }}
-          restore-keys: sonar-${{ runner.os }}-
-
-      # Pré-check connectivité vers SonarQube (ignore cert auto-signé)
       - name: Preflight SonarQube
+        if: env.HAS_SECRETS == 'true'
         run: |
-          set -euxo pipefail
-          command -v curl || (sudo apt-get update && sudo apt-get install -y curl jq)
-          echo "HEAD ${SONAR_HOST_URL}/batch/index"
-          curl -kI "${SONAR_HOST_URL}/batch/index"
+          set -euo pipefail
+          : "${SONAR_HOST_URL:?SONAR_HOST_URL is empty. Did you set the repo secret?}"
+          echo "HEAD ${SONAR_HOST_URL%/}/batch/index"
+          curl -kI "${SONAR_HOST_URL%/}/batch/index"
           echo "Status API:"
-          curl -ks "${SONAR_HOST_URL}/api/system/status" | jq .
-
-      # --- build/tests/coverage à adapter selon ta stack ---
-      # - run: mvn -B verify
-      # - run: npm ci && npm test -- --coverage
-      # - run: ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml
+          curl -ks "${SONAR_HOST_URL%/}/api/system/status" | jq . || true
 
       - name: SonarQube Scan
+        if: env.HAS_SECRETS == 'true'
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN:     ${{ env.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=sonar-test
@@ -71,17 +53,17 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.exclusions=**/vendor/**,**/node_modules/**,**/dist/**,**/build/**
             -Dsonar.scanner.skipCertificateCheck=true
-            # Exemple (décommente/ajuste selon ta stack) :
-            # -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            # -Dsonar.php.coverage.reportPaths=build/logs/clover.xml
-            # -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml
 
       - name: SonarQube Quality Gate
-        # Pour ignorer le cert auto-signé côté action Node (appel API), on désactive la vérif TLS ici
+        if: env.HAS_SECRETS == 'true'
+        uses: SonarSource/sonarqube-quality-gate-action@v1
         env:
           SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN:     ${{ env.SONAR_TOKEN }}
           NODE_TLS_REJECT_UNAUTHORIZED: "0"
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        # with:
-        #   timeout-minutes: 15  # optionnel: délai d'attente du Quality Gate
+
+      - name: Skip reason (no secrets)
+        if: env.HAS_SECRETS != 'true'
+        run: |
+          echo "Secrets SONAR_HOST_URL/SONAR_TOKEN indisponibles (PR depuis fork ?)."
+          echo "Analyse SonarQube sautée."
